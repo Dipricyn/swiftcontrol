@@ -41,6 +41,10 @@ jobs:
           echo "keyPassword=android" >> android/keystore.properties
           echo "keyAlias=androiddebugkey" >> android/keystore.properties
           echo "storeFile=debug.jks" >> android/keystore.properties
+      
+      # Generate localization files
+      - name: Generate localization files
+        run: flutter gen-l10n
 
       # 5️⃣ Build debug APK
       - name: Build debug APK
