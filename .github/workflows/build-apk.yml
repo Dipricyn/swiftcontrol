@@ -1,8 +1,7 @@
-name: Build Android APK
+name: Build SwiftControl APKs
 
 on:
-  workflow_dispatch:
-    # Allows manual trigger
+  workflow_dispatch: # Allows manual trigger
   push:
     branches:
       - main
@@ -12,22 +11,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Set up Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build release APK (unsigned)
+      # 4️⃣ Generate a dummy keystore for signing
+      - name: Generate dummy keystore
+        run: |
+          mkdir -p android
+          keytool -genkeypair -v \
+            -keystore android/debug.jks \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Debug, OU=Dev, O=MyOrg, L=City, ST=State, C=US"
+          echo "storePassword=android" > android/keystore.properties
+          echo "keyPassword=android" >> android/keystore.properties
+          echo "keyAlias=androiddebugkey" >> android/keystore.properties
+          echo "storeFile=debug.jks" >> android/keystore.properties
+
+      # 5️⃣ Build debug APK
+      - name: Build debug APK
         run: flutter build apk --debug
 
-      - name: Upload release APK artifact
+      # 6️⃣ Build release APK
+      - name: Build release APK
+        run: flutter build apk --release
+
+      # 7️⃣ Upload artifacts
+      - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: SwiftControl-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: SwiftControl-APKs
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/app-release.apk
